@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-sql:
+  test-database:
     runs-on: ubuntu-latest
 
     services:
@@ -31,13 +31,41 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mysql-client
 
-      - name: Sprawdzenie, czy plik SQL istnieje
-        run: test -f database/create_db.sql
+      - name: Sprawdzenie, czy pliki SQL istnieją
+        run: |
+          test -f database/create_db.sql
+          test -f database/create_tasks.sql
+          test -f database/seed_tasks.sql
 
-      - name: Uruchomienie skryptu SQL
+      - name: Uruchomienie create_db.sql
         run: |
           mysql -h 127.0.0.1 -uroot -proot < database/create_db.sql
+
+      - name: Uruchomienie create_tasks.sql
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot < database/create_tasks.sql
+
+      - name: Uruchomienie seed_tasks.sql
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot < database/seed_tasks.sql
 
       - name: Sprawdzenie, czy baza została utworzona
         run: |
           mysql -h 127.0.0.1 -uroot -proot -e "SHOW DATABASES LIKE 'db_ci';"
+
+      - name: Sprawdzenie, czy tabela tasks istnieje
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -D db_ci -e "SHOW TABLES LIKE 'tasks';"
+
+      - name: Sprawdzenie danych w tabeli tasks
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -D db_ci -e "SELECT * FROM tasks;"
+
+      - name: Sprawdzenie liczby rekordów w tasks
+        run: |
+          COUNT=$(mysql -h 127.0.0.1 -uroot -proot -D db_ci -sse "SELECT COUNT(*) FROM tasks;")
+          echo "Liczba rekordów: $COUNT"
+          if [ "$COUNT" -lt 1 ]; then
+            echo "Brak danych w tabeli tasks!"
+            exit 1
+          fi
