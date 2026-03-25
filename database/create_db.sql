@@ -1,1 +1,1 @@
-create database db_ci
+create database db_ci;
