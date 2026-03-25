@@ -1,1 +1,1 @@
-create database db_ci;
+CREATE DATABASE IF NOT EXISTS db_ci;
